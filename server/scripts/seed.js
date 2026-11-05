@@ -3,10 +3,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import { Product } from '../models/Product.js';
 import { Visitor } from '../models/Visitor.js';
 import { Event } from '../models/Event.js';
 import { PricePreference } from '../models/PricePreference.js';
+import { User } from '../models/User.js';
 import { PRODUCT_CATALOG } from '../services/recommendationEngine.js';
 
 dotenv.config();
@@ -104,6 +106,35 @@ async function seedDatabase() {
         max_price: 50000
       });
       console.log('✓ Inserted default price preference.');
+
+      // 5. Seed Demo Users with Hashed Credentials
+      console.log('Seeding pre-configured authentication credentials...');
+      await User.deleteMany({});
+      const demoUsers = [
+        {
+          name: "Judge Evaluator",
+          email: "judge@retailrocket.ai",
+          password: await bcrypt.hash("judge123", 10),
+          visitor_id: "1000294",
+          role: "judge"
+        },
+        {
+          name: "Alex Rivera",
+          email: "alex@retailrocket.ai",
+          password: await bcrypt.hash("audio123", 10),
+          visitor_id: "1000290",
+          role: "shopper"
+        },
+        {
+          name: "David Chen",
+          email: "david@retailrocket.ai",
+          password: await bcrypt.hash("tech123", 10),
+          visitor_id: "1000291",
+          role: "shopper"
+        }
+      ];
+      await User.insertMany(demoUsers);
+      console.log(`✓ Inserted ${demoUsers.length} initial user accounts.`);
     }
 
     console.log('\n=======================================');
@@ -117,4 +148,3 @@ async function seedDatabase() {
 }
 
 seedDatabase();
-

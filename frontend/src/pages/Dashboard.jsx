@@ -9,10 +9,11 @@ import TopProducts from '../components/TopProducts';
 import AIInsight from '../components/AIInsight';
 import VoiceAssistant from '../components/VoiceAssistant';
 import DeliveryTracker from '../components/DeliveryTracker';
+import AuthModal from '../components/AuthModal';
 import { useRecommendations } from '../hooks/useRecommendations';
 import { useVoiceAssistant } from '../hooks/useVoiceAssistant';
 import { enrichProduct } from '../utils/productCatalog';
-import { recordViewEvent, setPricePreference } from '../services/api';
+import { recordViewEvent, setPricePreference, getStoredUser, logoutUser } from '../services/api';
 import { 
   Sparkles, 
   Database, 
@@ -44,6 +45,8 @@ export default function Dashboard() {
   const [maxPriceFilter, setMaxPriceFilter] = useState(150000);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [simulationToast, setSimulationToast] = useState(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(() => getStoredUser());
 
   // Active tracked order state
   const [activeOrder, setActiveOrder] = useState({
@@ -92,6 +95,21 @@ export default function Dashboard() {
   const triggerToast = (msg) => {
     setSimulationToast(msg);
     setTimeout(() => setSimulationToast(null), 3500);
+  };
+
+  const handleAuthSuccess = (user) => {
+    setCurrentUser(user);
+    if (user && user.visitor_id) {
+      setVisitorId(String(user.visitor_id));
+      handleFetchRecommendations(String(user.visitor_id));
+    }
+    triggerToast(`Welcome back, ${user.name}! Switched to Visitor #${user.visitor_id}`);
+  };
+
+  const handleLogout = () => {
+    logoutUser();
+    setCurrentUser(null);
+    triggerToast('Logged out successfully');
   };
 
   const handleProductClick = async (item) => {
@@ -198,6 +216,9 @@ export default function Dashboard() {
           apiConnected={apiConnected}
           theme={theme}
           setTheme={setTheme}
+          currentUser={currentUser}
+          onOpenAuthModal={() => setAuthModalOpen(true)}
+          onLogout={handleLogout}
         />
 
         {/* JUDGE SHOWCASE & PERSONA SWITCHER BAR */}
@@ -784,6 +805,14 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Auth Modal for Login & Account Creation */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+        theme={theme}
+      />
     </div>
   );
 }

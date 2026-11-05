@@ -2,7 +2,6 @@ function getWorkingBaseUrl() {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  // When running on localhost:5000 unified host, relative origin connects directly with 0ms overhead
   if (typeof window !== 'undefined' && window.location && window.location.origin) {
     return window.location.origin;
   }
@@ -109,4 +108,66 @@ export async function getModelMetrics() {
   const response = await fetch(`${baseUrl}/api/metrics`);
   if (!response.ok) return null;
   return await response.json();
+}
+
+// Authentication APIs
+export async function loginUser(email, password) {
+  const baseUrl = getWorkingBaseUrl();
+  const response = await fetch(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.detail || 'Login failed');
+  }
+
+  if (data.token) {
+    localStorage.setItem('retailrocket_token', data.token);
+    localStorage.setItem('retailrocket_user', JSON.stringify(data.user));
+  }
+  return data;
+}
+
+export async function registerUser(name, email, password, visitor_id) {
+  const baseUrl = getWorkingBaseUrl();
+  const response = await fetch(`${baseUrl}/api/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password, visitor_id })
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.detail || 'Registration failed');
+  }
+
+  if (data.token) {
+    localStorage.setItem('retailrocket_token', data.token);
+    localStorage.setItem('retailrocket_user', JSON.stringify(data.user));
+  }
+  return data;
+}
+
+export async function getDemoCredentials() {
+  const baseUrl = getWorkingBaseUrl();
+  const response = await fetch(`${baseUrl}/api/auth/demo-credentials`);
+  if (!response.ok) return { credentials: [] };
+  return await response.json();
+}
+
+export function getStoredUser() {
+  try {
+    const raw = localStorage.getItem('retailrocket_user');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function logoutUser() {
+  localStorage.removeItem('retailrocket_token');
+  localStorage.removeItem('retailrocket_user');
 }

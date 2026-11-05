@@ -10,6 +10,7 @@ import {
 } from '../controllers/userController.js';
 import { recordViewEvent, recordGenericEvent } from '../controllers/eventController.js';
 import { getAllProducts, getProductById } from '../controllers/productController.js';
+import { register, login, getMe, getDemoCredentials } from '../controllers/authController.js';
 import recommendationEngine from '../services/recommendationEngine.js';
 
 const router = express.Router();
@@ -18,6 +19,12 @@ const router = express.Router();
 router.get('/health', (req, res) => {
   res.json(recommendationEngine.getHealthStats());
 });
+
+// Authentication & Accounts
+router.post('/auth/register', register);
+router.post('/auth/login', login);
+router.get('/auth/me', getMe);
+router.get('/auth/demo-credentials', getDemoCredentials);
 
 // Recommendations
 router.get('/recommend/:visitorId', getRecommendations);
@@ -40,4 +47,3 @@ router.get('/products', getAllProducts);
 router.get('/products/:id', getProductById);
 
 export default router;
-
