@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getRecommendations, getUserStats, getUserHistory, getHealth, getSampleUser } from '../services/api';
 
 export function useRecommendations(initialVisitorId = '1000294') {
@@ -11,6 +11,11 @@ export function useRecommendations(initialVisitorId = '1000294') {
   const [error, setError] = useState("");
   const [apiConnected, setApiConnected] = useState(false);
   const [datasetHealth, setDatasetHealth] = useState(null);
+
+  const visitorIdRef = useRef(visitorId);
+  useEffect(() => {
+    visitorIdRef.current = visitorId;
+  }, [visitorId]);
 
   // Live health monitoring
   useEffect(() => {
@@ -38,20 +43,15 @@ export function useRecommendations(initialVisitorId = '1000294') {
   }, []);
 
   const handleFetchRecommendations = useCallback(async (targetId) => {
-    const idToFetch = (targetId || visitorId).trim();
+    const idToFetch = String(targetId !== undefined && targetId !== null ? targetId : visitorIdRef.current).trim();
     if (!idToFetch) {
       setError("Please enter a visitor ID");
       return;
     }
 
+    setVisitorId(idToFetch);
     setLoading(true);
     setError("");
-
-    // CRITICAL: CLEAR OLD VISITOR DATA COMPLETELY
-    setRecommendations([]);
-    setSelectedVisitor(null);
-    setUserStats(null);
-    setUserHistory(null);
 
     try {
       const [recData, statsData, historyData] = await Promise.all([
@@ -79,11 +79,12 @@ export function useRecommendations(initialVisitorId = '1000294') {
     } finally {
       setLoading(false);
     }
-  }, [visitorId]);
+  }, []);
 
+  // Fetch initial visitor recommendations ONLY ONCE on mount
   useEffect(() => {
     handleFetchRecommendations(initialVisitorId);
-  }, [initialVisitorId, handleFetchRecommendations]);
+  }, []);
 
   const generateSampleVisitor = async () => {
     try {
@@ -93,7 +94,7 @@ export function useRecommendations(initialVisitorId = '1000294') {
         handleFetchRecommendations(data.visitor_id);
       }
     } catch {
-      handleFetchRecommendations('1000294');
+      handleFetchRecommendations('1000290');
     }
   };
 

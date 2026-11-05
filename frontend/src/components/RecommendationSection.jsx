@@ -17,6 +17,11 @@ export default function RecommendationSection({
   const isLight = theme === 'light';
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Reset carousel index whenever recommendations change for a new visitor
+  React.useEffect(() => {
+    setCurrentIndex(0);
+  }, [recommendations]);
+
   const visibleCards = 3;
   const maxIndex = Math.max(0, recommendations.length - visibleCards);
 
