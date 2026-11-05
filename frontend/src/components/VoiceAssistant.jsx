@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mic, MicOff, Volume2, User, Bot } from 'lucide-react';
+import { Mic, MicOff, Volume2, User, Bot, Sparkles, Truck, Headphones, Laptop, CreditCard } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function VoiceAssistant({ 
@@ -9,11 +9,25 @@ export default function VoiceAssistant({
   startListening, 
   stopListening, 
   playResponse,
+  processTextCommand,
   theme 
 }) {
   const isLight = theme === 'light';
   const isListening = voiceState === 'LISTENING';
   const isProcessing = voiceState === 'PROCESSING';
+
+  const quickPrompts = [
+    { label: 'Top recommendations for me', icon: Sparkles },
+    { label: 'Show audio & headphones', icon: Headphones },
+    { label: 'Recommend laptops & computing', icon: Laptop },
+    { label: 'Check delivery & cash on delivery', icon: Truck },
+  ];
+
+  const handlePromptClick = (text) => {
+    if (processTextCommand) {
+      processTextCommand(text);
+    }
+  };
 
   return (
     <div className={`border rounded-2xl p-5 shadow-md flex flex-col justify-between h-full min-h-[580px] relative overflow-hidden transition-colors ${
@@ -23,7 +37,7 @@ export default function VoiceAssistant({
     }`}>
       <div>
         {/* Header */}
-        <div className={`flex items-center justify-between mb-6 pb-3 border-b ${
+        <div className={`flex items-center justify-between mb-4 pb-3 border-b ${
           isLight ? 'border-slate-200' : 'border-slate-800/60'
         }`}>
           <div className="flex items-center gap-2">
@@ -32,9 +46,12 @@ export default function VoiceAssistant({
             }`}>
               <Mic className="w-4 h-4" />
             </div>
-            <h3 className={`text-sm font-bold font-['Outfit'] ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              AI Voice Assistant
-            </h3>
+            <div>
+              <h3 className={`text-sm font-bold font-['Outfit'] ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                AI Voice Shopping Assistant
+              </h3>
+              <p className="text-[10px] text-purple-500 font-semibold">Voice Recommendations & Delivery Tracking</p>
+            </div>
           </div>
 
           <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border flex items-center gap-1.5 ${
@@ -47,13 +64,40 @@ export default function VoiceAssistant({
             <span className={`w-1.5 h-1.5 rounded-full ${
               isListening ? 'bg-purple-500 animate-ping' : isProcessing ? 'bg-cyan-500 animate-spin' : 'bg-slate-400'
             }`} />
-            {isListening ? 'Listening...' : isProcessing ? 'Processing...' : 'Idle'}
+            {isListening ? 'Listening...' : isProcessing ? 'Analyzing AI...' : 'Ready'}
           </span>
         </div>
 
+        {/* Quick Voice Prompt Suggestions */}
+        <div className="space-y-1.5 mb-4">
+          <span className={`text-[10px] font-semibold uppercase tracking-wider block ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            Ask or Click a Question:
+          </span>
+          <div className="grid grid-cols-2 gap-1.5">
+            {quickPrompts.map((q, idx) => {
+              const Icon = q.icon;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handlePromptClick(q.label)}
+                  className={`p-2 rounded-xl border text-[11px] font-medium text-left flex items-center gap-1.5 transition-all ${
+                    isLight
+                      ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 hover:text-purple-600'
+                      : 'bg-slate-900/60 hover:bg-slate-800 border-slate-800 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                  <span className="line-clamp-1">{q.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Circular Microphone Visualizer */}
-        <div className="flex flex-col items-center justify-center my-6">
-          <div className="relative flex items-center justify-center w-36 h-36">
+        <div className="flex flex-col items-center justify-center my-3">
+          <div className="relative flex items-center justify-center w-28 h-28">
             {/* Concentric Pulsing Rings */}
             {isListening && (
               <>
@@ -73,22 +117,22 @@ export default function VoiceAssistant({
             {/* Mic Center Button */}
             <button
               onClick={isListening ? stopListening : startListening}
-              className={`w-24 h-24 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 relative z-10 ${
+              className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 relative z-10 ${
                 isListening
                   ? 'bg-gradient-to-tr from-purple-600 to-rose-600 text-white shadow-purple-600/40 scale-105'
                   : 'bg-gradient-to-tr from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-600/30'
               }`}
             >
               {isListening ? (
-                <MicOff className="w-9 h-9 animate-bounce text-white" />
+                <MicOff className="w-7 h-7 animate-bounce text-white" />
               ) : (
-                <Mic className="w-9 h-9 text-white" />
+                <Mic className="w-7 h-7 text-white" />
               )}
             </button>
           </div>
 
           {/* Waveform graphic */}
-          <div className="flex items-center gap-1 h-6 my-4">
+          <div className="flex items-center gap-1 h-5 my-2.5">
             {[40, 70, 30, 90, 50, 80, 40, 100, 60, 30, 80, 50, 90, 40].map((height, idx) => (
               <motion.span
                 key={idx}
@@ -105,16 +149,16 @@ export default function VoiceAssistant({
             ))}
           </div>
 
-          <p className={`text-xs italic text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-            {isListening ? '"Listening to your query..."' : '"What products should I buy?"'}
+          <p className={`text-[11px] italic text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            {isListening ? '"Listening to your query..."' : '"Click mic or prompt to ask AI"'}
           </p>
 
           <button
             onClick={isListening ? stopListening : startListening}
-            className={`mt-4 w-full py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+            className={`mt-3 w-full py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
               isListening
                 ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'
-                : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white border-purple-500/30'
+                : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white border-purple-500/30 shadow-md'
             }`}
           >
             {isListening ? (
@@ -123,14 +167,14 @@ export default function VoiceAssistant({
               </>
             ) : (
               <>
-                <Mic className="w-3.5 h-3.5" /> Start Listening
+                <Mic className="w-3.5 h-3.5" /> Speak with Assistant
               </>
             )}
           </button>
         </div>
 
         {/* Chat Transcript Panel */}
-        <div className={`space-y-3 pt-3 border-t text-xs ${isLight ? 'border-slate-200' : 'border-slate-800/60'}`}>
+        <div className={`space-y-2.5 pt-3 border-t text-xs ${isLight ? 'border-slate-200' : 'border-slate-800/60'}`}>
           {/* User Bubble */}
           <div className="flex items-start gap-2.5">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
@@ -141,8 +185,8 @@ export default function VoiceAssistant({
             <div className={`border rounded-xl p-2.5 w-full ${
               isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-[#020817] border-blue-500/20 text-slate-300'
             }`}>
-              <div className="text-[10px] font-semibold text-indigo-600 mb-0.5">You</div>
-              <p>{transcript || "What products should I buy?"}</p>
+              <div className="text-[10px] font-semibold text-indigo-600 mb-0.5">Customer Query</div>
+              <p>{transcript || "What products do you recommend for me?"}</p>
             </div>
           </div>
 
@@ -156,9 +200,9 @@ export default function VoiceAssistant({
             <div className={`border rounded-xl p-2.5 w-full ${
               isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-[#020817] border-purple-500/20 text-slate-300'
             }`}>
-              <div className="text-[10px] font-semibold text-purple-600 mb-0.5">AI Assistant</div>
-              <p className="leading-relaxed">
-                {spokenResponse || "Based on your previous shopping activity, I recommend items generated specifically for your interaction pattern."}
+              <div className="text-[10px] font-semibold text-purple-600 mb-0.5">AI Recommendation Voice</div>
+              <p className="leading-relaxed text-[11px]">
+                {spokenResponse || "Based on your browsing activity, I recommend items matched to your interaction score. Free delivery and Cash on Delivery are available on all items."}
               </p>
             </div>
           </div>
@@ -169,14 +213,14 @@ export default function VoiceAssistant({
       {spokenResponse && (
         <button
           onClick={playResponse}
-          className={`w-full mt-4 py-2 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+          className={`w-full mt-3 py-2 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
             isLight
               ? 'bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200'
               : 'bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border-purple-500/30'
           }`}
         >
           <Volume2 className="w-3.5 h-3.5" />
-          <span>Play Response</span>
+          <span>Replay Spoken Voice</span>
         </button>
       )}
     </div>

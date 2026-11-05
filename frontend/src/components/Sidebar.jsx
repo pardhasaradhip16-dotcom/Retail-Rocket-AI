@@ -9,7 +9,8 @@ import {
   ShoppingBag,
   Users,
   Package,
-  Activity
+  Activity,
+  Truck
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -19,6 +20,7 @@ export default function Sidebar({ activeTab, setActiveTab, datasetHealth, theme 
   const navItems = [
     { id: 'home', label: 'Home', icon: Home },
     { id: 'recommendations', label: 'Recommendations', icon: Sparkles },
+    { id: 'delivery', label: 'Delivery & Orders', icon: Truck },
     { id: 'voice', label: 'Voice Assistant', icon: Mic },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'dataset', label: 'Dataset Info', icon: Database },

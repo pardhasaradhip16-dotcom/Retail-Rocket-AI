@@ -8,6 +8,7 @@ import BehaviorChart from '../components/BehaviorChart';
 import TopProducts from '../components/TopProducts';
 import AIInsight from '../components/AIInsight';
 import VoiceAssistant from '../components/VoiceAssistant';
+import DeliveryTracker from '../components/DeliveryTracker';
 import { useRecommendations } from '../hooks/useRecommendations';
 import { useVoiceAssistant } from '../hooks/useVoiceAssistant';
 import { enrichProduct } from '../utils/productCatalog';
@@ -27,7 +28,12 @@ import {
   Award, 
   Activity, 
   Layers, 
-  Cpu
+  Cpu,
+  Truck,
+  CreditCard,
+  Banknote,
+  Calendar,
+  Package
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -38,6 +44,18 @@ export default function Dashboard() {
   const [maxPriceFilter, setMaxPriceFilter] = useState(150000);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [simulationToast, setSimulationToast] = useState(null);
+
+  // Active tracked order state
+  const [activeOrder, setActiveOrder] = useState({
+    trackingId: 'RR-EXP-984210',
+    item: 'Logitech MX Master 3S Wireless Mouse',
+    price: '₹8,995',
+    image: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500&auto=format&fit=crop&q=80',
+    paymentMethod: 'Cash on Delivery (COD)',
+    estimatedDate: 'Saturday, Nov 8, 2026',
+    carrier: 'BlueDart Express',
+    destination: 'Flat 402, Green Glen Layout, Bengaluru - 560001'
+  });
 
   // Live Algorithm Tuner State for Judges
   const [mlWeight, setMlWeight] = useState(0.60);
@@ -65,7 +83,8 @@ export default function Dashboard() {
     spokenResponse,
     startListening,
     stopListening,
-    playResponse
+    playResponse,
+    processTextCommand
   } = useVoiceAssistant(visitorId, handleFetchRecommendations, recommendations);
 
   const isLight = theme === 'light';
@@ -108,6 +127,26 @@ export default function Dashboard() {
     }
   };
 
+  const handlePlaceOrder = (product, paymentType = 'Cash on Delivery (COD)') => {
+    const randomSuffix = Math.floor(100000 + Math.random() * 900000);
+    const newOrder = {
+      trackingId: `RR-EXP-${randomSuffix}`,
+      item: product.name,
+      price: product.price,
+      image: product.image,
+      paymentMethod: paymentType,
+      estimatedDate: 'Saturday, Nov 8, 2026',
+      carrier: 'BlueDart Express',
+      destination: 'Flat 402, Green Glen Layout, Bengaluru - 560001'
+    };
+
+    setActiveOrder(newOrder);
+    handleSimulateAction(product.item_id, 'transaction');
+    setSelectedProduct(null);
+    setActiveTab('delivery');
+    triggerToast(`Order placed for ${product.name}! Assigned Tracking ID #${newOrder.trackingId}`);
+  };
+
   const handleApplyPriceFilter = async () => {
     try {
       await setPricePreference(visitorId, minPriceFilter, maxPriceFilter);
@@ -120,9 +159,10 @@ export default function Dashboard() {
 
   const personas = [
     { id: '1000290', label: '🎧 Audio & Tech', name: 'Alex - Audio Enthusiast' },
-    { id: '1000294', label: '💻 Mac & Computing', name: 'Sarah - Creative Pro' },
-    { id: '1000291', label: '👟 Active Lifestyle', name: 'Marcus - Fitness Shopper' },
-    { id: '1000305', label: '🎮 Gamer & Gear', name: 'Elena - PC Enthusiast' }
+    { id: '1000291', label: '💻 Computing & Work', name: 'David - IT Engineer' },
+    { id: '1000292', label: '👟 Active Lifestyle', name: 'Marcus - Fitness Shopper' },
+    { id: '1000294', label: '💻 Mac & Desk', name: 'Sarah - Creative Pro' },
+    { id: '1000298', label: '📷 Photography', name: 'Elena - Photographer' }
   ];
 
   const categories = ['All', 'Audio & Electronics', 'Wearable Tech', 'Laptops', 'Gaming Peripherals', 'Cameras & Optics'];
@@ -261,6 +301,7 @@ export default function Dashboard() {
                   startListening={startListening}
                   stopListening={stopListening}
                   playResponse={playResponse}
+                  processTextCommand={processTextCommand}
                   theme={theme}
                 />
               </div>
@@ -369,7 +410,12 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Tab 3: VOICE ASSISTANT */}
+        {/* Tab 3: DELIVERY & ORDERS */}
+        {activeTab === 'delivery' && (
+          <DeliveryTracker theme={theme} activeOrder={activeOrder} />
+        )}
+
+        {/* Tab 4: VOICE ASSISTANT */}
         {activeTab === 'voice' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-7">
@@ -380,40 +426,56 @@ export default function Dashboard() {
                 startListening={startListening}
                 stopListening={stopListening}
                 playResponse={playResponse}
+                processTextCommand={processTextCommand}
                 theme={theme}
               />
             </div>
             <div className={`lg:col-span-5 border rounded-2xl p-6 ${isLight ? 'bg-white border-slate-200' : 'bg-[#0a1630]/90 border-purple-500/20'}`}>
               <h3 className="text-base font-bold font-['Outfit'] mb-4 flex items-center gap-2">
-                <Mic className="w-5 h-5 text-purple-600" /> AI Voice Assistant Studio
+                <Mic className="w-5 h-5 text-purple-600" /> AI Voice Assistant Commands
               </h3>
               <p className="text-xs text-slate-400 mb-4">
-                The RetailRocket Voice Assistant uses the Web Speech Recognition and Synthesis API combined with SVD recommendations to guide shoppers in real time.
+                The RetailRocket Voice Assistant uses Web Speech recognition and synthesis combined with collaborative filtering to answer product queries and provide live delivery tracking.
               </p>
               <div className="space-y-3">
-                <div className={`p-3 rounded-xl border text-xs ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900 border-purple-500/20'}`}>
+                <div 
+                  onClick={() => processTextCommand('What products do you recommend for me?')}
+                  className={`p-3 rounded-xl border text-xs cursor-pointer hover:border-purple-500 transition-all ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900 border-purple-500/20'}`}
+                >
                   <p className="font-semibold text-purple-500">"What products do you recommend for me?"</p>
-                  <p className="text-[11px] text-slate-400 mt-1">Queries the top 3 ranked collaborative filtering products for visitor {visitorId}.</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Queries the top collaborative filtering recommendations for visitor {visitorId}.</p>
                 </div>
-                <div className={`p-3 rounded-xl border text-xs ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900 border-purple-500/20'}`}>
-                  <p className="font-semibold text-purple-500">"Show headphones under 30,000 rupees"</p>
-                  <p className="text-[11px] text-slate-400 mt-1">Applies price constraints and filters the latent space for audio equipment.</p>
+                <div 
+                  onClick={() => processTextCommand('Show audio and headphones')}
+                  className={`p-3 rounded-xl border text-xs cursor-pointer hover:border-purple-500 transition-all ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900 border-purple-500/20'}`}
+                >
+                  <p className="font-semibold text-purple-500">"Show audio and headphones"</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Filters the latent space for high-fidelity audio equipment & earbuds.</p>
                 </div>
-                <div className={`p-3 rounded-xl border text-xs ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900 border-purple-500/20'}`}>
-                  <p className="font-semibold text-purple-500">"Why is this product recommended?"</p>
-                  <p className="text-[11px] text-slate-400 mt-1">Speaks the dynamic explanation based on your view frequency and purchase patterns.</p>
+                <div 
+                  onClick={() => processTextCommand('Check delivery options and cash on delivery')}
+                  className={`p-3 rounded-xl border text-xs cursor-pointer hover:border-purple-500 transition-all ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900 border-purple-500/20'}`}
+                >
+                  <p className="font-semibold text-purple-500">"Check delivery options and cash on delivery"</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Speaks delivery estimates, COD policies, and active shipment tracking.</p>
+                </div>
+                <div 
+                  onClick={() => processTextCommand('Recommend laptops and computers')}
+                  className={`p-3 rounded-xl border text-xs cursor-pointer hover:border-purple-500 transition-all ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900 border-purple-500/20'}`}
+                >
+                  <p className="font-semibold text-purple-500">"Recommend laptops and computers"</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Recommends work setups including MacBook Pro and Logitech MX Master.</p>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Tab 4: ANALYTICS & ALGORITHM TUNER */}
+        {/* Tab 5: ANALYTICS & ALGORITHM TUNER */}
         {activeTab === 'analytics' && (
           <div className="space-y-6">
             <StatsCards userStats={userStats} theme={theme} />
 
-            {/* Model Benchmarks & Quality Metrics Card */}
             <div className={`p-6 rounded-2xl border ${isLight ? 'bg-white border-slate-200' : 'bg-[#0a1630]/90 border-purple-500/20'}`}>
               <h3 className="text-base font-bold font-['Outfit'] mb-4 flex items-center gap-2">
                 <Award className="w-5 h-5 text-amber-500" /> Machine Learning Model Evaluation (Hackathon Benchmark)
@@ -437,7 +499,6 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Live Collaborative Scoring Formula Tuner */}
               <div className={`p-4 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#020817] border-purple-500/20'}`}>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
@@ -531,7 +592,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Tab 5: DATASET INFO */}
+        {/* Tab 6: DATASET INFO */}
         {activeTab === 'dataset' && (
           <div className={`p-6 rounded-2xl border space-y-6 ${isLight ? 'bg-white border-slate-200' : 'bg-[#0a1630]/90 border-purple-500/20'}`}>
             <div>
@@ -575,7 +636,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Tab 6: SETTINGS */}
+        {/* Tab 7: SETTINGS */}
         {activeTab === 'settings' && (
           <div className={`p-6 rounded-2xl border space-y-6 ${isLight ? 'bg-white border-slate-200' : 'bg-[#0a1630]/90 border-purple-500/20'}`}>
             <h2 className="text-xl font-bold font-['Outfit'] flex items-center gap-2">
@@ -605,17 +666,17 @@ export default function Dashboard() {
         )}
       </main>
 
-      {/* Product Detail Modal */}
+      {/* Product Detail Modal with Delivery & Payment Integration */}
       {selectedProduct && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className={`rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 border ${
+          <div className={`rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4 border ${
             isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#0a1630] border-purple-500/30 text-slate-100'
           }`}>
             <div className={`flex justify-between items-center pb-2 border-b ${
               isLight ? 'border-slate-200' : 'border-slate-800'
             }`}>
               <h3 className={`text-lg font-bold font-['Outfit'] ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                Product Details
+                Product Details & Fast Checkout
               </h3>
               <button
                 onClick={() => setSelectedProduct(null)}
@@ -625,64 +686,93 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="space-y-3">
-              <div className="w-full h-48 rounded-xl overflow-hidden bg-slate-900 border border-slate-200/20">
+            <div className="flex gap-4 items-start">
+              <div className="w-36 h-36 rounded-xl overflow-hidden bg-slate-900 border border-slate-200/20 shrink-0">
                 <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover" />
               </div>
-              <div>
-                <h4 className={`text-base font-bold font-['Outfit'] ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase font-bold text-purple-600 bg-purple-600/10 px-2 py-0.5 rounded">
+                  {selectedProduct.category}
+                </span>
+                <h4 className={`text-sm font-bold font-['Outfit'] line-clamp-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   {selectedProduct.name}
                 </h4>
-                <p className="text-xs text-purple-600 font-semibold mt-0.5">{selectedProduct.category}</p>
-                {selectedProduct.description && (
-                  <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">{selectedProduct.description}</p>
+                <div className="text-base font-mono text-emerald-600 font-bold">
+                  {selectedProduct.price}
+                </div>
+                <p className="text-[10px] text-slate-400 font-mono">ID: #{selectedProduct.item_id}</p>
+                {selectedProduct.score && (
+                  <p className="text-[10px] text-indigo-500 font-semibold">Recommendation Score: {selectedProduct.score}</p>
                 )}
               </div>
             </div>
 
-            <div className="space-y-2.5 text-xs">
-              <div className={`flex justify-between py-1 border-b ${isLight ? 'border-slate-200 text-slate-700' : 'border-slate-800/60 text-slate-300'}`}>
-                <span>Price:</span>
-                <span className="font-mono text-emerald-600 font-bold">{selectedProduct.price}</span>
+            {/* Delivery & Payment Information Box */}
+            <div className={`p-3.5 rounded-xl border space-y-2 text-xs ${
+              isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#020817] border-purple-500/20'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 font-bold text-purple-500">
+                  <Truck className="w-4 h-4" /> Estimated Delivery:
+                </span>
+                <span className="font-semibold text-emerald-500">Saturday, Nov 8, 2026 (Free 48h)</span>
               </div>
-              <div className={`flex justify-between py-1 border-b ${isLight ? 'border-slate-200 text-slate-700' : 'border-slate-800/60 text-slate-300'}`}>
-                <span>Product ID:</span>
-                <span className="font-mono font-bold">#{selectedProduct.item_id}</span>
+              <div className="grid grid-cols-2 gap-1.5 pt-1 text-[11px]">
+                <div className="flex items-center gap-1 text-slate-400">
+                  <Banknote className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Cash on Delivery (COD)</span>
+                </div>
+                <div className="flex items-center gap-1 text-slate-400">
+                  <CreditCard className="w-3.5 h-3.5 text-purple-500" />
+                  <span>Credit/Debit Cards & UPI</span>
+                </div>
+                <div className="flex items-center gap-1 text-slate-400">
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
+                  <span>7 Days Replacement</span>
+                </div>
+                <div className="flex items-center gap-1 text-slate-400">
+                  <Package className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Insured Express Shipping</span>
+                </div>
               </div>
-              {selectedProduct.rank && (
-                <div className={`flex justify-between py-1 border-b ${isLight ? 'border-slate-200 text-slate-700' : 'border-slate-800/60 text-slate-300'}`}>
-                  <span>Recommendation Rank:</span>
-                  <span className="font-mono text-purple-600 font-bold">#{selectedProduct.rank}</span>
-                </div>
-              )}
-              {selectedProduct.score && (
-                <div className={`flex justify-between py-1 border-b ${isLight ? 'border-slate-200 text-slate-700' : 'border-slate-800/60 text-slate-300'}`}>
-                  <span>Recommendation Score:</span>
-                  <span className="font-mono text-indigo-600 font-bold">{selectedProduct.score}</span>
-                </div>
-              )}
             </div>
 
-            {/* Interactive Actions for Demonstration */}
-            <div className="grid grid-cols-2 gap-2 pt-2">
+            {/* NLP Explanation */}
+            {selectedProduct.explanation && (
+              <p className={`text-xs italic p-2.5 rounded-lg border ${
+                isLight ? 'bg-purple-50/50 border-purple-100 text-purple-800' : 'bg-purple-950/20 border-purple-500/20 text-purple-300'
+              }`}>
+                "{selectedProduct.explanation}"
+              </p>
+            )}
+
+            {/* Checkout & Action Buttons */}
+            <div className="space-y-2 pt-1">
               <button
-                onClick={() => {
-                  handleSimulateAction(selectedProduct.item_id, 'addtocart');
-                  setSelectedProduct(null);
-                }}
-                className="py-2.5 rounded-xl border border-purple-500/40 text-purple-400 font-semibold text-xs hover:bg-purple-600/20 flex items-center justify-center gap-1.5 transition-all"
+                onClick={() => handlePlaceOrder(selectedProduct, 'Cash on Delivery (COD)')}
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all"
               >
-                <ShoppingCart className="w-3.5 h-3.5" /> Add to Cart (3x)
+                <Truck className="w-4 h-4" />
+                <span>Order with Cash on Delivery (COD) & Track Live</span>
               </button>
-              <button
-                onClick={() => {
-                  handleSimulateAction(selectedProduct.item_id, 'transaction');
-                  setSelectedProduct(null);
-                }}
-                className="py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold text-xs shadow-md hover:from-emerald-500 hover:to-teal-500 flex items-center justify-center gap-1.5 transition-all"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" /> Buy Now (5x)
-              </button>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => handlePlaceOrder(selectedProduct, 'Credit Card (Visa •••• 4242)')}
+                  className="py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-xs shadow-sm flex items-center justify-center gap-1.5"
+                >
+                  <CreditCard className="w-3.5 h-3.5" /> Pay with Card / UPI
+                </button>
+                <button
+                  onClick={() => {
+                    handleSimulateAction(selectedProduct.item_id, 'addtocart');
+                    setSelectedProduct(null);
+                  }}
+                  className="py-2 rounded-xl border border-purple-500/40 text-purple-400 font-semibold text-xs hover:bg-purple-600/20 flex items-center justify-center gap-1.5"
+                >
+                  <ShoppingCart className="w-3.5 h-3.5" /> Add to Cart (3x)
+                </button>
+              </div>
             </div>
 
             <button
