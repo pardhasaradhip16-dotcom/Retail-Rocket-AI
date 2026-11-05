@@ -1,0 +1,46 @@
+{
+  "buildCommand": "npm run client:build",
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/recommend/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/health",
+      "destination": "/api"
+    },
+    {
+      "source": "/user/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/users/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/events/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/events",
+      "destination": "/api"
+    },
+    {
+      "source": "/products/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/products",
+      "destination": "/api"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

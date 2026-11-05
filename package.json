@@ -1,0 +1,33 @@
+{
+  "name": "retail-rocket-mern-stack",
+  "version": "2.0.0",
+  "description": "RetailRocket AI - Complete MERN Stack E-Commerce Product Recommendation System with SVD Collaborative Filtering",
+  "scripts": {
+    "server": "npm --prefix server start",
+    "server:dev": "npm --prefix server run dev",
+    "client": "npm --prefix frontend run dev",
+    "client:build": "npm --prefix frontend run build",
+    "seed": "npm --prefix server run seed",
+    "install:all": "npm install && npm --prefix server install && npm --prefix frontend install",
+    "dev": "concurrently \"npm run server:dev\" \"npm run client\"",
+    "build": "npm run client:build",
+    "start": "npm run server"
+  },
+  "dependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "keywords": [
+    "mern",
+    "mongodb",
+    "express",
+    "react",
+    "nodejs",
+    "recommendation-system",
+    "collaborative-filtering",
+    "svd",
+    "machine-learning"
+  ],
+  "author": "RetailRocket Team",
+  "license": "MIT"
+}
+
