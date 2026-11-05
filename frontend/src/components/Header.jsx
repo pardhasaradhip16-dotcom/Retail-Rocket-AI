@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wifi, WifiOff, Sun, Moon, ChevronDown } from 'lucide-react';
+import { Wifi, WifiOff, Sun, Moon, ChevronDown, Database, Cpu, ShieldCheck } from 'lucide-react';
 
 export default function Header({ apiConnected, theme, setTheme }) {
   const isLight = theme === 'light';
@@ -9,6 +9,17 @@ export default function Header({ apiConnected, theme, setTheme }) {
       isLight ? 'border-slate-200' : 'border-purple-500/10'
     }`}>
       <div>
+        <div className="flex items-center gap-2 mb-1">
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm">
+            MERN Stack Production
+          </span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 flex items-center gap-1">
+            <Database className="w-3 h-3" /> MongoDB Connected
+          </span>
+          <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 items-center gap-1">
+            <Cpu className="w-3 h-3" /> Truncated SVD AI
+          </span>
+        </div>
         <h1 className={`text-2xl font-extrabold font-['Outfit'] tracking-tight flex items-center gap-2 ${
           isLight ? 'text-slate-900' : 'text-white'
         }`}>
@@ -20,7 +31,7 @@ export default function Header({ apiConnected, theme, setTheme }) {
         <p className={`text-xs max-w-2xl mt-1 leading-relaxed ${
           isLight ? 'text-slate-600' : 'text-slate-400'
         }`}>
-          Personalized product suggestions based on real customer interaction behavior from the RetailRocket e-commerce dataset.
+          Personalized product suggestions based on customer interaction behavior from the RetailRocket e-commerce dataset.
         </p>
       </div>
 
@@ -65,7 +76,7 @@ export default function Header({ apiConnected, theme, setTheme }) {
             <span className={`relative inline-flex rounded-full h-2 w-2 ${apiConnected ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
           </span>
           <span className="text-[11px] font-semibold">
-            {apiConnected ? 'API Connected' : 'API Offline'}
+            {apiConnected ? 'Server Active (:5000)' : 'API Offline'}
           </span>
         </div>
 
@@ -74,14 +85,14 @@ export default function Header({ apiConnected, theme, setTheme }) {
           isLight ? 'border-slate-300' : 'border-slate-800'
         }`}>
           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center font-bold text-xs text-white shadow-md">
-            JD
+            RR
           </div>
           <div className="hidden sm:block text-left">
             <div className={`text-xs font-semibold leading-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              John Doe
+              Judge / Evaluator
             </div>
             <div className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-              Visitor Profile
+              Live Demo Session
             </div>
           </div>
           <ChevronDown className={`w-3.5 h-3.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />

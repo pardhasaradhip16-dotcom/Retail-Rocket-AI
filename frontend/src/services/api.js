@@ -1,32 +1,16 @@
-const PORTS = [5000, 8000, 8088, 8085, 8082, 8001];
-let cachedWorkingPort = null;
-
-async function getWorkingBaseUrl() {
+function getWorkingBaseUrl() {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-
-  if (cachedWorkingPort) {
-    return `http://127.0.0.1:${cachedWorkingPort}`;
+  // When running on localhost:5000 unified host, relative origin connects directly with 0ms overhead
+  if (typeof window !== 'undefined' && window.location && window.location.origin) {
+    return window.location.origin;
   }
-
-  for (const port of PORTS) {
-    try {
-      const res = await fetch(`http://127.0.0.1:${port}/health`, { signal: AbortSignal.timeout(1200) });
-      if (res.ok) {
-        cachedWorkingPort = port;
-        return `http://127.0.0.1:${port}`;
-      }
-    } catch {
-      // try next port
-    }
-  }
-
   return "http://127.0.0.1:5000";
 }
 
 export async function getHealth() {
-  const baseUrl = await getWorkingBaseUrl();
+  const baseUrl = getWorkingBaseUrl();
   const response = await fetch(`${baseUrl}/health`);
   if (!response.ok) {
     throw new Error("API offline");
@@ -35,7 +19,7 @@ export async function getHealth() {
 }
 
 export async function getRecommendations(visitorId, limit = 10, minPrice = null, maxPrice = null) {
-  const baseUrl = await getWorkingBaseUrl();
+  const baseUrl = getWorkingBaseUrl();
   console.log("Fetching recommendations for visitor:", visitorId);
 
   let url = `${baseUrl}/recommend/${encodeURIComponent(visitorId)}?limit=${limit}`;
@@ -52,12 +36,11 @@ export async function getRecommendations(visitorId, limit = 10, minPrice = null,
   }
 
   const data = await response.json();
-  console.log("MERN API recommendation response for visitor", visitorId, ":", data);
   return data;
 }
 
 export async function getUserStats(visitorId) {
-  const baseUrl = await getWorkingBaseUrl();
+  const baseUrl = getWorkingBaseUrl();
   const response = await fetch(`${baseUrl}/user/${encodeURIComponent(visitorId)}/stats`);
   if (!response.ok) {
     return null;
@@ -66,7 +49,7 @@ export async function getUserStats(visitorId) {
 }
 
 export async function getUserHistory(visitorId) {
-  const baseUrl = await getWorkingBaseUrl();
+  const baseUrl = getWorkingBaseUrl();
   const response = await fetch(`${baseUrl}/user/${encodeURIComponent(visitorId)}/history`);
   if (!response.ok) {
     return null;
@@ -75,7 +58,7 @@ export async function getUserHistory(visitorId) {
 }
 
 export async function getSampleUser() {
-  const baseUrl = await getWorkingBaseUrl();
+  const baseUrl = getWorkingBaseUrl();
   const response = await fetch(`${baseUrl}/users/sample`);
   if (!response.ok) {
     throw new Error("Failed to fetch sample user");
@@ -84,7 +67,7 @@ export async function getSampleUser() {
 }
 
 export async function recordViewEvent(visitorId, itemId) {
-  const baseUrl = await getWorkingBaseUrl();
+  const baseUrl = getWorkingBaseUrl();
   const response = await fetch(`${baseUrl}/events/view`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -98,7 +81,7 @@ export async function recordViewEvent(visitorId, itemId) {
 }
 
 export async function setPricePreference(visitorId, minPrice, maxPrice) {
-  const baseUrl = await getWorkingBaseUrl();
+  const baseUrl = getWorkingBaseUrl();
   const response = await fetch(`${baseUrl}/user/${encodeURIComponent(visitorId)}/price-preference`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -108,15 +91,22 @@ export async function setPricePreference(visitorId, minPrice, maxPrice) {
 }
 
 export async function getPricePreference(visitorId) {
-  const baseUrl = await getWorkingBaseUrl();
+  const baseUrl = getWorkingBaseUrl();
   const response = await fetch(`${baseUrl}/user/${encodeURIComponent(visitorId)}/price-preference`);
   if (!response.ok) return null;
   return await response.json();
 }
 
 export async function getAllProducts() {
-  const baseUrl = await getWorkingBaseUrl();
+  const baseUrl = getWorkingBaseUrl();
   const response = await fetch(`${baseUrl}/products`);
   if (!response.ok) return { products: [] };
+  return await response.json();
+}
+
+export async function getModelMetrics() {
+  const baseUrl = getWorkingBaseUrl();
+  const response = await fetch(`${baseUrl}/api/metrics`);
+  if (!response.ok) return null;
   return await response.json();
 }
