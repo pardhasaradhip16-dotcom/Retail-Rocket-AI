@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "seed": "node scripts/seed.js"
+    "seed": "node scripts/seed.js",
+    "build": "node -e \"console.log('Server ready')\"",
+    "client:build": "node -e \"console.log('Server ready')\""
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
