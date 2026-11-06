@@ -1,13 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, ArrowRight, Tag } from 'lucide-react';
+import { Sparkles, ArrowRight, Tag, ShoppingCart, Check, Eye } from 'lucide-react';
 import { enrichProduct } from '../utils/productCatalog';
 
-export default function RecommendationCard({ item: rawItem, rank, onSelect, theme }) {
+export default function RecommendationCard({ item: rawItem, rank, onSelect, onAddToCart, theme }) {
   const item = enrichProduct(rawItem);
   const isLight = theme === 'light';
+  const [justAdded, setJustAdded] = useState(false);
 
   const barWidth = Math.min(100, Math.max(15, Math.round(item.score * 1000)));
+
+  const handleAddToCartClick = (e) => {
+    e.stopPropagation();
+    if (onAddToCart) onAddToCart(item);
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 2000);
+  };
 
   return (
     <motion.div
@@ -106,18 +114,39 @@ export default function RecommendationCard({ item: rawItem, rank, onSelect, them
         </div>
       </div>
 
-      {/* View Details Button */}
-      <button
-        onClick={() => onSelect && onSelect(item)}
-        className={`w-full py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-300 ${
-          isLight
-            ? 'bg-slate-50 hover:bg-purple-600 hover:text-white text-slate-700 border-slate-300 hover:border-purple-600'
-            : 'bg-[#0d1b3e] hover:bg-purple-600/20 text-slate-300 hover:text-white border-purple-500/20 hover:border-purple-500/40'
-        }`}
-      >
-        <span>View Product Details</span>
-        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-      </button>
+      {/* Dual Action Buttons: Add to Cart & Details */}
+      <div className="grid grid-cols-2 gap-2 pt-1">
+        <button
+          onClick={handleAddToCartClick}
+          className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all ${
+            justAdded
+              ? 'bg-emerald-600 text-white'
+              : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white'
+          }`}
+          title="Add this product to your Shopping Cart"
+        >
+          {justAdded ? (
+            <>
+              <Check className="w-3.5 h-3.5" /> Added!
+            </>
+          ) : (
+            <>
+              <ShoppingCart className="w-3.5 h-3.5" /> Add to Cart
+            </>
+          )}
+        </button>
+
+        <button
+          onClick={() => onSelect && onSelect(item)}
+          className={`py-2 px-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+            isLight
+              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+              : 'bg-[#0d1b3e] hover:bg-purple-600/20 text-slate-300 hover:text-white border-purple-500/20'
+          }`}
+        >
+          <Eye className="w-3.5 h-3.5" /> Details
+        </button>
+      </div>
     </motion.div>
   );
 }

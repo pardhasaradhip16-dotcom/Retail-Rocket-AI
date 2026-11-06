@@ -10,10 +10,11 @@ import AIInsight from '../components/AIInsight';
 import VoiceAssistant from '../components/VoiceAssistant';
 import DeliveryTracker from '../components/DeliveryTracker';
 import AuthModal from '../components/AuthModal';
+import CartDrawer from '../components/CartDrawer';
 import { useRecommendations } from '../hooks/useRecommendations';
 import { useVoiceAssistant } from '../hooks/useVoiceAssistant';
 import { enrichProduct } from '../utils/productCatalog';
-import { recordViewEvent, setPricePreference, getStoredUser, logoutUser } from '../services/api';
+import { recordViewEvent, recordAddToCartEvent, setPricePreference, getStoredUser, logoutUser } from '../services/api';
 import { 
   Sparkles, 
   Database, 
@@ -48,17 +49,80 @@ export default function Dashboard() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(() => getStoredUser());
 
-  // Active tracked order state
-  const [activeOrder, setActiveOrder] = useState({
-    trackingId: 'RR-EXP-984210',
-    item: 'Logitech MX Master 3S Wireless Mouse',
-    price: '₹8,995',
-    image: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500&auto=format&fit=crop&q=80',
-    paymentMethod: 'Cash on Delivery (COD)',
-    estimatedDate: 'Saturday, Nov 8, 2026',
-    carrier: 'BlueDart Express',
-    destination: 'Flat 402, Green Glen Layout, Bengaluru - 560001'
+  // Interactive Shopping Cart State (Persisted)
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem('rr_cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
   });
+
+  // Dynamic order helper per visitor persona
+  const getOrderForVisitor = (vid) => {
+    const v = String(vid);
+    if (v === '1000290') {
+      return {
+        trackingId: 'RR-EXP-552109',
+        item: 'Sony WH-1000XM5 Wireless Headphones',
+        price: '₹29,990',
+        image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=80',
+        paymentMethod: 'Cash on Delivery (COD)',
+        estimatedDate: 'Saturday, Nov 7, 2026 (Express 48h)',
+        carrier: 'Delhivery Air',
+        destination: 'Bandra West, Mumbai - 400050'
+      };
+    } else if (v === '1000291') {
+      return {
+        trackingId: 'RR-EXP-774912',
+        item: 'Keychron K2 Mechanical Keyboard',
+        price: '₹9,499',
+        image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&auto=format&fit=crop&q=80',
+        paymentMethod: 'Credit Card (HDFC •••• 1092)',
+        estimatedDate: 'Sunday, Nov 8, 2026 (Standard)',
+        carrier: 'DTDC Express',
+        destination: 'Connaught Place, New Delhi - 110001'
+      };
+    } else if (v === '1000292') {
+      return {
+        trackingId: 'RR-EXP-381029',
+        item: 'Dell UltraSharp 27" 4K USB-C Monitor',
+        price: '₹54,990',
+        image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500&auto=format&fit=crop&q=80',
+        paymentMethod: 'Cash on Delivery (COD)',
+        estimatedDate: 'Monday, Nov 9, 2026',
+        carrier: 'BlueDart Surface',
+        destination: 'Jubilee Hills, Hyderabad - 500033'
+      };
+    } else if (v === '1000298') {
+      return {
+        trackingId: 'RR-EXP-819230',
+        item: 'Apple AirPods Pro (2nd Generation)',
+        price: '₹24,900',
+        image: 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=500&auto=format&fit=crop&q=80',
+        paymentMethod: 'UPI / QR Code',
+        estimatedDate: 'Tuesday, Nov 10, 2026',
+        carrier: 'Shadowfax Express',
+        destination: 'Anna Nagar, Chennai - 600040'
+      };
+    } else {
+      return {
+        trackingId: 'RR-EXP-984210',
+        item: 'Apple MacBook Pro 14" M3 Pro',
+        price: '₹1,99,900',
+        image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&auto=format&fit=crop&q=80',
+        paymentMethod: 'Cash on Delivery (COD)',
+        estimatedDate: 'Friday, Nov 6, 2026 (Priority Express 24h)',
+        carrier: 'BlueDart Express Air',
+        destination: 'Koramangala 4th Block, Bengaluru - 560034'
+      };
+    }
+  };
+
+  // Active tracked order state (dynamic per visitor)
+  const [activeOrder, setActiveOrder] = useState(() => getOrderForVisitor('1000294'));
 
   // Live Algorithm Tuner State for Judges
   const [mlWeight, setMlWeight] = useState(0.60);
@@ -145,17 +209,104 @@ export default function Dashboard() {
     }
   };
 
+  // Save cart to localStorage
+  const saveCart = (items) => {
+    setCartItems(items);
+    try {
+      localStorage.setItem('rr_cart', JSON.stringify(items));
+    } catch (e) {}
+  };
+
+  const handleAddToCart = async (product) => {
+    const item = enrichProduct(product);
+    let updated;
+    const existingIndex = cartItems.findIndex(i => String(i.item_id) === String(item.item_id));
+
+    if (existingIndex >= 0) {
+      updated = [...cartItems];
+      updated[existingIndex].quantity = (updated[existingIndex].quantity || 1) + 1;
+    } else {
+      updated = [...cartItems, { ...item, quantity: 1, addedAt: Date.now() }];
+    }
+
+    saveCart(updated);
+    const totalCount = updated.reduce((a, b) => a + (b.quantity || 1), 0);
+    triggerToast(`🛒 Added "${item.name}" to cart! (${totalCount} ${totalCount === 1 ? 'item' : 'items'} in cart)`);
+
+    // Log addtocart event to MongoDB and SVD recommendation engine (weight 3.0x)
+    try {
+      await recordAddToCartEvent(visitorId, item.item_id);
+    } catch (e) {}
+
+    // Immediately reflect in local stats
+    if (userStats) {
+      userStats.add_to_cart = (userStats.add_to_cart || 0) + 1;
+      userStats.interaction_score = Number(((userStats.views || 0)*1.0 + userStats.add_to_cart*3.0 + (userStats.transactions || 0)*5.0).toFixed(1));
+    }
+  };
+
+  const handleUpdateCartQty = (itemId, newQty) => {
+    if (newQty <= 0) {
+      handleRemoveFromCart(itemId);
+      return;
+    }
+    const updated = cartItems.map(item => {
+      if (String(item.item_id) === String(itemId)) {
+        return { ...item, quantity: newQty };
+      }
+      return item;
+    });
+    saveCart(updated);
+  };
+
+  const handleRemoveFromCart = (itemId) => {
+    const updated = cartItems.filter(item => String(item.item_id) !== String(itemId));
+    saveCart(updated);
+    triggerToast('Item removed from cart');
+  };
+
+  const handleCheckoutCart = ({ items, mainItem, totalAmount, paymentMethod, itemCount }) => {
+    const randomSuffix = Math.floor(100000 + Math.random() * 900000);
+    const dest = getOrderForVisitor(visitorId).destination;
+    const deliveryDateObj = new Date(Date.now() + 2 * 86400000);
+    const dateFormatted = deliveryDateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+
+    const newOrder = {
+      trackingId: `RR-EXP-${randomSuffix}`,
+      item: items.length > 1 ? `${mainItem.name} (+${items.length - 1} more items)` : mainItem.name,
+      price: totalAmount,
+      image: mainItem.image,
+      paymentMethod,
+      estimatedDate: `${dateFormatted} (Express 48h)`,
+      carrier: 'BlueDart Express Air',
+      destination: dest
+    };
+
+    setActiveOrder(newOrder);
+    items.forEach(it => {
+      handleSimulateAction(it.item_id, 'transaction');
+    });
+
+    saveCart([]); // clear cart
+    setActiveTab('delivery');
+    triggerToast(`Order placed for ${itemCount} items via ${paymentMethod}! Tracking live.`);
+  };
+
   const handlePlaceOrder = (product, paymentType = 'Cash on Delivery (COD)') => {
     const randomSuffix = Math.floor(100000 + Math.random() * 900000);
+    const dest = getOrderForVisitor(visitorId).destination;
+    const deliveryDateObj = new Date(Date.now() + 2 * 86400000);
+    const dateFormatted = deliveryDateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+
     const newOrder = {
       trackingId: `RR-EXP-${randomSuffix}`,
       item: product.name,
       price: product.price,
       image: product.image,
       paymentMethod: paymentType,
-      estimatedDate: 'Saturday, Nov 8, 2026',
+      estimatedDate: `${dateFormatted} (Express 48h)`,
       carrier: 'BlueDart Express',
-      destination: 'Flat 402, Green Glen Layout, Bengaluru - 560001'
+      destination: dest
     };
 
     setActiveOrder(newOrder);
@@ -219,6 +370,8 @@ export default function Dashboard() {
           currentUser={currentUser}
           onOpenAuthModal={() => setAuthModalOpen(true)}
           onLogout={handleLogout}
+          cartCount={cartItems.reduce((acc, i) => acc + (i.quantity || 1), 0)}
+          onOpenCart={() => setCartOpen(true)}
         />
 
         {/* JUDGE SHOWCASE & PERSONA SWITCHER BAR */}
@@ -240,6 +393,7 @@ export default function Dashboard() {
                 onClick={() => {
                   setVisitorId(p.id);
                   handleFetchRecommendations(p.id);
+                  setActiveOrder(getOrderForVisitor(p.id));
                   triggerToast(`Switched to ${p.name} (ID: ${p.id})`);
                 }}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
@@ -304,12 +458,18 @@ export default function Dashboard() {
                   onRetry={() => handleFetchRecommendations(visitorId)}
                   onGenerateNew={generateSampleVisitor}
                   onSelectProduct={handleProductClick}
+                  onAddToCart={handleAddToCart}
                   theme={theme}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   <BehaviorChart userHistory={userHistory} theme={theme} />
-                  <TopProducts recommendations={recommendations} onSelectProduct={handleProductClick} theme={theme} />
+                  <TopProducts 
+                    recommendations={recommendations} 
+                    onSelectProduct={handleProductClick} 
+                    onAddToCart={handleAddToCart} 
+                    theme={theme} 
+                  />
                   <AIInsight visitorId={selectedVisitor || visitorId} userStats={userStats} theme={theme} />
                 </div>
               </div>
@@ -423,6 +583,16 @@ export default function Dashboard() {
                         <span className="text-slate-400 text-[10px]">Score</span>
                         <span className="font-mono font-bold text-purple-500">{enriched.score}</span>
                       </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(enriched);
+                        }}
+                        className="w-full mt-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                      >
+                        <ShoppingCart className="w-3.5 h-3.5" /> Add to Cart
+                      </button>
                     </div>
                   );
                 })}
@@ -499,7 +669,7 @@ export default function Dashboard() {
 
             <div className={`p-6 rounded-2xl border ${isLight ? 'bg-white border-slate-200' : 'bg-[#0a1630]/90 border-purple-500/20'}`}>
               <h3 className="text-base font-bold font-['Outfit'] mb-4 flex items-center gap-2">
-                <Award className="w-5 h-5 text-amber-500" /> Machine Learning Model Evaluation (Hackathon Benchmark)
+                <Award className="w-5 h-5 text-amber-500" /> Production Machine Learning Model Evaluation & Offline Validation Metrics
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 <div className="p-4 rounded-xl border border-purple-500/20 bg-purple-600/10">
@@ -786,12 +956,12 @@ export default function Dashboard() {
                 </button>
                 <button
                   onClick={() => {
-                    handleSimulateAction(selectedProduct.item_id, 'addtocart');
+                    handleAddToCart(selectedProduct);
                     setSelectedProduct(null);
                   }}
-                  className="py-2 rounded-xl border border-purple-500/40 text-purple-400 font-semibold text-xs hover:bg-purple-600/20 flex items-center justify-center gap-1.5"
+                  className="py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs shadow-sm flex items-center justify-center gap-1.5"
                 >
-                  <ShoppingCart className="w-3.5 h-3.5" /> Add to Cart (3x)
+                  <ShoppingCart className="w-3.5 h-3.5" /> Add to Cart (3x Weight)
                 </button>
               </div>
             </div>
@@ -805,6 +975,17 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Interactive Shopping Cart Drawer */}
+      <CartDrawer
+        isOpen={cartOpen}
+        onClose={() => setCartOpen(false)}
+        cartItems={cartItems}
+        onUpdateQty={handleUpdateCartQty}
+        onRemoveItem={handleRemoveFromCart}
+        onCheckoutOrder={handleCheckoutCart}
+        theme={theme}
+      />
 
       {/* Auth Modal for Login & Account Creation */}
       <AuthModal

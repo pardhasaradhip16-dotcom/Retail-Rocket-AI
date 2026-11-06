@@ -12,6 +12,7 @@ export default function RecommendationSection({
   onRetry, 
   onGenerateNew,
   onSelectProduct,
+  onAddToCart,
   theme 
 }) {
   const isLight = theme === 'light';
@@ -120,6 +121,7 @@ export default function RecommendationSection({
                   item={item}
                   rank={item.rank || currentIndex + idx + 1}
                   onSelect={onSelectProduct}
+                  onAddToCart={onAddToCart}
                   theme={theme}
                 />
               ))}

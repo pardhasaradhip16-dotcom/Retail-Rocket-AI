@@ -79,6 +79,21 @@ export async function recordViewEvent(visitorId, itemId) {
   return await response.json();
 }
 
+export async function recordAddToCartEvent(visitorId, itemId) {
+  const baseUrl = getWorkingBaseUrl();
+  const response = await fetch(`${baseUrl}/events`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      visitor_id: String(visitorId),
+      item_id: String(itemId),
+      event: 'addtocart',
+      timestamp: Date.now()
+    })
+  });
+  return await response.json();
+}
+
 export async function setPricePreference(visitorId, minPrice, maxPrice) {
   const baseUrl = getWorkingBaseUrl();
   const response = await fetch(`${baseUrl}/user/${encodeURIComponent(visitorId)}/price-preference`, {

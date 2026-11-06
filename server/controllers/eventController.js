@@ -43,6 +43,8 @@ export async function recordGenericEvent(req, res) {
 
     if (event === 'view') {
       recommendationEngine.recordView(visitor_id, item_id, timestamp);
+    } else if (event === 'addtocart') {
+      recommendationEngine.recordCart(visitor_id, item_id, timestamp);
     }
 
     if (isDbConnected()) {

@@ -12,7 +12,8 @@ import {
   LogIn, 
   LogOut, 
   Award,
-  Sparkles
+  Sparkles,
+  ShoppingCart
 } from 'lucide-react';
 
 export default function Header({ 
@@ -21,7 +22,9 @@ export default function Header({
   setTheme, 
   currentUser, 
   onOpenAuthModal, 
-  onLogout 
+  onLogout,
+  cartCount = 0,
+  onOpenCart
 }) {
   const isLight = theme === 'light';
   const [menuOpen, setMenuOpen] = useState(false);
@@ -71,6 +74,27 @@ export default function Header({
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Shopping Cart Button with Count Badge */}
+        <button
+          onClick={onOpenCart}
+          className={`relative flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-bold transition-all ${
+            cartCount > 0
+              ? 'bg-gradient-to-r from-purple-600/20 to-indigo-600/20 border-purple-500/50 text-purple-400 hover:border-purple-500 shadow-sm'
+              : isLight
+              ? 'bg-white border-slate-300 text-slate-700 shadow-sm hover:bg-slate-50'
+              : 'bg-[#0a1630] border-purple-500/30 text-purple-300 hover:bg-purple-950/40'
+          }`}
+          title="Open Shopping Cart"
+        >
+          <ShoppingCart className="w-4 h-4 text-purple-500" />
+          <span className="hidden sm:inline">Cart</span>
+          {cartCount > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-white text-[10px] font-extrabold shadow-sm animate-pulse">
+              {cartCount}
+            </span>
+          )}
+        </button>
+
         {/* Light / Dark Theme Toggle Button */}
         <button
           onClick={() => setTheme(isLight ? 'dark' : 'light')}

@@ -1,7 +1,8 @@
 import React from 'react';
+import { ShoppingCart } from 'lucide-react';
 import { enrichProduct } from '../utils/productCatalog';
 
-export default function TopProducts({ recommendations, onSelectProduct, theme }) {
+export default function TopProducts({ recommendations, onSelectProduct, onAddToCart, theme }) {
   const isLight = theme === 'light';
   const topList = recommendations.slice(0, 5).map(enrichProduct);
 
@@ -24,8 +25,9 @@ export default function TopProducts({ recommendations, onSelectProduct, theme })
             isLight ? 'text-slate-500 border-slate-200' : 'text-slate-500 border-slate-800'
           }`}>
             <span className="col-span-1">#</span>
-            <span className="col-span-7">Product Name</span>
-            <span className="col-span-4 text-right">Score</span>
+            <span className="col-span-6">Product Name</span>
+            <span className="col-span-3 text-right">Score</span>
+            <span className="col-span-2 text-right">Action</span>
           </div>
 
           {topList.map((item, idx) => {
@@ -43,7 +45,7 @@ export default function TopProducts({ recommendations, onSelectProduct, theme })
                 <span className="col-span-1 font-bold font-mono text-purple-600">
                   {item.rank || idx + 1}
                 </span>
-                <div className="col-span-7 pr-2">
+                <div className="col-span-6 pr-2">
                   <div className={`font-medium line-clamp-1 ${isLight ? 'text-slate-900' : 'text-white'}`} title={item.name}>
                     {item.name}
                   </div>
@@ -51,16 +53,28 @@ export default function TopProducts({ recommendations, onSelectProduct, theme })
                     ID: #{item.item_id}
                   </div>
                 </div>
-                <div className="col-span-4 flex items-center justify-end gap-2">
+                <div className="col-span-3 flex items-center justify-end gap-1.5">
                   <span className={`font-mono text-[11px] ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                     {item.score}
                   </span>
-                  <div className={`w-12 h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-slate-200' : 'bg-slate-800'}`}>
+                  <div className={`w-8 h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-slate-200' : 'bg-slate-800'}`}>
                     <div
                       className="h-full bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full"
                       style={{ width: `${barWidth}%` }}
                     />
                   </div>
+                </div>
+                <div className="col-span-2 flex justify-end">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onAddToCart) onAddToCart(item);
+                    }}
+                    className="p-1 rounded-md bg-purple-600/15 hover:bg-purple-600 text-purple-400 hover:text-white transition-all"
+                    title="Quick Add to Cart"
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             );

@@ -93,13 +93,18 @@ export default function DeliveryTracker({ theme, activeOrder: initialOrder }) {
       return;
     }
 
-    const metroCodes = ['110001', '400001', '560001', '500001', '600001', '700001'];
-    const isMetro = metroCodes.includes(pincode);
+    const metroCodes = ['110001', '400001', '560001', '500001', '600001', '700001', '560034', '400050', '500033'];
+    const isMetro = metroCodes.includes(pincode) || pincode.startsWith('560') || pincode.startsWith('400') || pincode.startsWith('110');
+    
+    const daysToAdd = isMetro ? 2 : 4;
+    const estDate = new Date(Date.now() + daysToAdd * 86400000);
+    const dateFormatted = estDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+
     setPincodeStatus({
       checked: true,
       available: true,
-      city: isMetro ? 'Metro Fast Zone' : 'Standard Delivery Zone',
-      date: isMetro ? 'Friday, Nov 7, 2026 (Express 48h)' : 'Sunday, Nov 9, 2026 (Standard)',
+      city: isMetro ? 'Metro Express Zone (Priority Air)' : 'Regional Delivery Zone',
+      date: `${dateFormatted} (${isMetro ? 'Express 48h' : 'Standard 4-5 days'})`,
       cod: true
     });
   };
