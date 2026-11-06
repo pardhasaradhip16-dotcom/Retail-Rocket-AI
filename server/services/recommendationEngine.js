@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { isDbConnected } from '../config/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -704,7 +705,7 @@ class RecommendationEngine {
       products: Object.keys(this.indexToItem).length || 15,
       interactions: this.events.length || 720,
       model_type: "TruncatedSVD Collaborative Filtering (MERN Native)",
-      database: "MongoDB with Standalone Fallback Cache"
+      database: isDbConnected() ? "MongoDB Connected (Mongoose ODM Active)" : "MongoDB with Standalone Fallback Cache"
     };
   }
 }
