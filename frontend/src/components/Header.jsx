@@ -135,7 +135,9 @@ export default function Header({
             <span className={`relative inline-flex rounded-full h-2 w-2 ${apiConnected ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
           </span>
           <span className="text-[11px] font-semibold">
-            {apiConnected ? 'Server Active (:5000)' : 'API Offline'}
+            {apiConnected 
+              ? (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'Server Active (:5000)' : 'Cloud API Active') 
+              : 'Connecting API...'}
           </span>
         </div>
 
