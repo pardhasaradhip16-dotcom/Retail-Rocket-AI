@@ -1,13 +1,20 @@
 import { PRODUCT_CATALOG, enrichProduct } from '../utils/productCatalog.js';
 
+export const RENDER_BACKEND_URL = "https://retail-rocket-ai.onrender.com";
+
 function getWorkingBaseUrl() {
   if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+    return import.meta.env.VITE_API_URL.replace(/\/+$/, '');
   }
-  if (typeof window !== 'undefined' && window.location && window.location.origin) {
-    return window.location.origin;
+  if (typeof window !== 'undefined' && window.location) {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return "http://localhost:5000";
+    }
+    // When deployed on Vercel, automatically connect directly to your live Render backend
+    return RENDER_BACKEND_URL;
   }
-  return "http://127.0.0.1:5000";
+  return RENDER_BACKEND_URL;
 }
 
 // Safe JSON fetcher that verifies HTTP status and Content-Type (guards against SPA index.html returns)
